@@ -10,6 +10,7 @@ use App\Classes\CrudTable;
 use App\Classes\JsonResponse;
 use App\Events\UserAfterActivationSuccessfulEvent;
 use App\Exceptions\NotAllowedException;
+use App\Models\Branch;
 use App\Models\CustomerBillingAddress;
 use App\Models\CustomerGroup;
 use App\Models\CustomerShippingAddress;
@@ -73,15 +74,15 @@ class UserCrud extends CrudService
      */
     public $relations = [
         'leftJoin' => [
-            [ 'nexopos_customers_groups as group', 'nexopos_users.group_id', '=', 'group.id' ],
-            [ 'nexopos_users as author', 'nexopos_users.author', '=', 'author.id' ],
+            ['nexopos_customers_groups as group', 'nexopos_users.group_id', '=', 'group.id'],
+            ['nexopos_users as author', 'nexopos_users.author', '=', 'author.id'],
         ],
     ];
 
     public $pick = [
-        'author' => [ 'username' ],
-        'role' => [ 'name' ],
-        'group' => [ 'id', 'name' ],
+        'author' => ['username'],
+        'role' => ['name'],
+        'group' => ['id', 'name'],
     ];
 
     protected $permissions = [
@@ -121,11 +122,12 @@ class UserCrud extends CrudService
         'gender',
         'pobox',
         'credit_limit_amount',
+        'branch_id',
     ];
 
     protected $tabsRelations = [
-        'shipping' => [ CustomerShippingAddress::class, 'customer_id', 'id' ],
-        'billing' => [ CustomerBillingAddress::class, 'customer_id', 'id' ],
+        'shipping' => [CustomerShippingAddress::class, 'customer_id', 'id'],
+        'billing' => [CustomerBillingAddress::class, 'customer_id', 'id'],
     ];
 
     protected $casts = [
@@ -150,8 +152,8 @@ class UserCrud extends CrudService
     {
         parent::__construct();
 
-        $this->userService = app()->make( UsersService::class );
-        $this->options = app()->make( Options::class );
+        $this->userService = app()->make(UsersService::class);
+        $this->options = app()->make(Options::class);
     }
 
     /**
@@ -163,15 +165,15 @@ class UserCrud extends CrudService
     public function getLabels()
     {
         return [
-            'list_title' => __( 'Users List' ),
-            'list_description' => __( 'Display all users.' ),
-            'no_entry' => __( 'No users has been registered' ),
-            'create_new' => __( 'Add a new user' ),
-            'create_title' => __( 'Create a new user' ),
-            'create_description' => __( 'Register a new user and save it.' ),
-            'edit_title' => __( 'Edit user' ),
-            'edit_description' => __( 'Modify  User.' ),
-            'back_to_list' => __( 'Return to Users' ),
+            'list_title' => __('Users List'),
+            'list_description' => __('Display all users.'),
+            'no_entry' => __('No users has been registered'),
+            'create_new' => __('Add a new user'),
+            'create_title' => __('Create a new user'),
+            'create_description' => __('Register a new user and save it.'),
+            'edit_title' => __('Edit user'),
+            'edit_description' => __('Modify  User.'),
+            'back_to_list' => __('Return to Users'),
         ];
     }
 
@@ -179,7 +181,7 @@ class UserCrud extends CrudService
      * Check whether a feature is enabled
      *
      **/
-    public function isEnabled( $feature ): bool
+    public function isEnabled($feature): bool
     {
         return false; // by default
     }
@@ -190,251 +192,297 @@ class UserCrud extends CrudService
      * @param  object/null
      * @return array of field
      */
-    public function getForm( $entry = null )
+    public function getForm($entry = null)
     {
         return [
             'main' => [
-                'label' => __( 'Username' ),
+                'label' => __('Username'),
                 'name' => 'username',
                 'value' => $entry->username ?? '',
                 'validation' => $entry === null ? 'required|unique:nexopos_users,username' : [
                     'required',
-                    Rule::unique( 'nexopos_users', 'username' )->ignore( $entry->id ),
+                    Rule::unique('nexopos_users', 'username')->ignore($entry->id),
                 ],
-                'description' => __( 'Provide a name to the resource.' ),
+                'description' => __('Provide a name to the resource.'),
             ],
             'tabs' => [
                 'general' => [
-                    'label' => __( 'General' ),
+                    'label' => __('General'),
                     'fields' => [
                         [
                             'type' => 'text',
                             'name' => 'email',
-                            'label' => __( 'Email' ),
+                            'label' => __('Email'),
                             'validation' => $entry === null ? 'required|email|unique:nexopos_users,email' : [
                                 'required',
                                 'email',
-                                Rule::unique( 'nexopos_users', 'email' )->ignore( $entry->id ),
+                                Rule::unique('nexopos_users', 'email')->ignore($entry->id),
                             ],
-                            'description' => __( 'Will be used for various purposes such as email recovery.' ),
+                            'description' => __('Will be used for various purposes such as email recovery.'),
                             'value' => $entry->email ?? '',
-                        ], [
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'first_name',
                             'value' => $entry?->first_name,
-                            'label' => __( 'First Name' ),
-                            'description' => __( 'Provide the user first name.' ),
-                        ], [
+                            'label' => __('First Name'),
+                            'description' => __('Provide the user first name.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'last_name',
                             'value' => $entry?->last_name,
-                            'label' => __( 'Last Name' ),
-                            'description' => __( 'Provide the user last name.' ),
-                        ], [
+                            'label' => __('Last Name'),
+                            'description' => __('Provide the user last name.'),
+                        ],
+                        [
                             'type' => 'password',
                             'name' => 'password',
-                            'label' => __( 'Password' ),
+                            'label' => __('Password'),
                             'validation' => 'sometimes|min:6',
-                            'description' => __( 'Make a unique and secure password.' ),
-                        ], [
+                            'description' => __('Make a unique and secure password.'),
+                        ],
+                        [
                             'type' => 'password',
                             'name' => 'password_confirm',
                             'validation' => 'sometimes|same:general.password',
-                            'label' => __( 'Confirm Password' ),
-                            'description' => __( 'Should be the same as the password.' ),
-                        ], [
+                            'label' => __('Confirm Password'),
+                            'description' => __('Should be the same as the password.'),
+                        ],
+                        [
                             'type' => 'switch',
-                            'options' => Helper::kvToJsOptions( [ __( 'No' ), __( 'Yes' ) ] ),
+                            'options' => Helper::kvToJsOptions([__('No'), __('Yes')]),
                             'name' => 'active',
-                            'label' => __( 'Active' ),
-                            'description' => __( 'Define whether the user can use the application.' ),
-                            'value' => ( $entry !== null && $entry->active ? 1 : 0 ) ?? 0,
-                        ], [
+                            'label' => __('Active'),
+                            'description' => __('Define whether the user can use the application.'),
+                            'value' => ($entry !== null && $entry->active ? 1 : 0) ?? 0,
+                        ],
+                        [
                             'type' => 'multiselect',
-                            'options' => Helper::toJsOptions( Role::get(), [ 'id', 'name' ] ),
-                            'description' => __( 'Define what roles applies to the user' ),
+                            'options' => Helper::toJsOptions(Role::get(), ['id', 'name']),
+                            'description' => __('Define what roles applies to the user'),
                             'name' => 'roles',
-                            'label' => __( 'Roles' ),
-                            'value' => $entry !== null ? ( $entry->roles()->get()->map( fn( $role ) => $role->id )->toArray() ?? '' ) : [],
-                        ], [
+                            'label' => __('Roles'),
+                            'value' => $entry !== null ? ($entry->roles()->get()->map(fn($role) => $role->id)->toArray() ?? '') : [],
+                        ],
+                        [
+                            'type' => 'multiselect',
+                            'options' => Helper::toJsOptions(Role::get(), ['id', 'name']),
+                            'description' => __('Define what roles applies to the user'),
+                            'name' => 'roles',
+                            'label' => __('Roles'),
+                            'value' => $entry !== null ? ($entry->roles()->get()->map(fn($role) => $role->id)->toArray() ?? '') : [],
+                        ],
+                        [
                             'type' => 'select',
-                            'label' => __( 'Group' ),
+                            'label' => __('Group'),
                             'name' => 'group_id',
                             'value' => $entry->group_id ?? '',
-                            'options' => Helper::toJsOptions( CustomerGroup::all(), [ 'id', 'name' ] ),
-                            'description' => __( 'Assign the customer to a group' ),
-                        ], [
+                            'options' => Helper::toJsOptions(CustomerGroup::all(), ['id', 'name']),
+                            'description' => __('Assign the customer to a group'),
+                        ],
+                        [
                             'type' => 'datetimepicker',
-                            'label' => __( 'Birth Date' ),
+                            'label' => __('Birth Date'),
                             'name' => 'birth_date',
-                            'value' => $entry instanceof User && $entry->birth_date !== null ? Carbon::parse( $entry->birth_date )->format( 'Y-m-d H:i:s' ) : null,
-                            'description' => __( 'Displays the customer birth date' ),
-                        ], [
+                            'value' => $entry instanceof User && $entry->birth_date !== null ? Carbon::parse($entry->birth_date)->format('Y-m-d H:i:s') : null,
+                            'description' => __('Displays the customer birth date'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'credit_limit_amount',
                             'value' => $entry?->credit_limit_amount,
-                            'label' => __( 'Credit Limit' ),
-                            'description' => __( 'Set the limit that can\'t be exceeded by the user.' ),
-                        ], [
+                            'label' => __('Credit Limit'),
+                            'description' => __('Set the limit that can\'t be exceeded by the user.'),
+                        ],
+                        [
                             'type' => 'select',
                             'name' => 'gender',
                             'value' => $entry?->gender,
-                            'label' => __( 'Gender' ),
-                            'options' => Helper::kvToJsOptions( [
-                                '' => __( 'Not Defined' ),
-                                'male' => __( 'Male' ),
-                                'female' => __( 'Female' ),
-                            ] ),
-                            'description' => __( 'Set the user gender.' ),
-                        ], [
+                            'label' => __('Gender'),
+                            'options' => Helper::kvToJsOptions([
+                                '' => __('Not Defined'),
+                                'male' => __('Male'),
+                                'female' => __('Female'),
+                            ]),
+                            'description' => __('Set the user gender.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'phone',
                             'value' => $entry?->phone,
-                            'label' => __( 'Phone' ),
-                            'validation' => collect( [
-                                ns()->option->get( 'ns_customers_force_unique_phone', 'no' ) === 'yes' ? (
-                                    $entry instanceof User && ! empty( $entry->phone ) ? Rule::unique( 'nexopos_users', 'phone' )->ignore( $entry->id ) : Rule::unique( 'nexopos_users', 'phone' )
+                            'label' => __('Phone'),
+                            'validation' => collect([
+                                ns()->option->get('ns_customers_force_unique_phone', 'no') === 'yes' ? (
+                                    $entry instanceof User && ! empty($entry->phone) ? Rule::unique('nexopos_users', 'phone')->ignore($entry->id) : Rule::unique('nexopos_users', 'phone')
                                 ) : '',
-                            ] )->toArray(),
-                            'description' => __( 'Set the user phone number.' ),
-                        ], [
+                            ])->toArray(),
+                            'description' => __('Set the user phone number.'),
+                        ],
+                        [
+                            'type' => 'select',
+                            'options' => Helper::toJsOptions(Branch::get(), ['id', 'name']),
+                            'description' => __('Define what branche applies to the user'),
+                            'name' => 'branch_id',
+                            'label' => __('Branch'),
+                            'value' => $entry->branch_id ?? '',
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'pobox',
                             'value' => $entry?->pobox,
-                            'label' => __( 'PO Box' ),
-                            'description' => __( 'Set the user PO Box.' ),
+                            'label' => __('PO Box'),
+                            'description' => __('Set the user PO Box.'),
                         ],
                     ],
                 ],
                 'billing' => [
-                    'label' => __( 'Billing Address' ),
+                    'label' => __('Billing Address'),
                     'fields' => [
                         [
                             'type' => 'text',
                             'name' => 'first_name',
                             'value' => $entry->billing->first_name ?? '',
-                            'label' => __( 'First Name' ),
-                            'description' => __( 'Provide the billing First Name.' ),
-                        ], [
+                            'label' => __('First Name'),
+                            'description' => __('Provide the billing First Name.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'last_name',
                             'value' => $entry->billing->last_name ?? '',
-                            'label' => __( 'Last name' ),
-                            'description' => __( 'Provide the billing last name.' ),
-                        ], [
+                            'label' => __('Last name'),
+                            'description' => __('Provide the billing last name.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'phone',
                             'value' => $entry->billing->phone ?? '',
-                            'label' => __( 'Phone' ),
-                            'description' => __( 'Billing phone number.' ),
-                        ], [
+                            'label' => __('Phone'),
+                            'description' => __('Billing phone number.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'address_1',
                             'value' => $entry->billing->address_1 ?? '',
-                            'label' => __( 'Address 1' ),
-                            'description' => __( 'Billing First Address.' ),
-                        ], [
+                            'label' => __('Address 1'),
+                            'description' => __('Billing First Address.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'address_2',
                             'value' => $entry->billing->address_2 ?? '',
-                            'label' => __( 'Address 2' ),
-                            'description' => __( 'Billing Second Address.' ),
-                        ], [
+                            'label' => __('Address 2'),
+                            'description' => __('Billing Second Address.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'country',
                             'value' => $entry->billing->country ?? '',
-                            'label' => __( 'Country' ),
-                            'description' => __( 'Billing Country.' ),
-                        ], [
+                            'label' => __('Country'),
+                            'description' => __('Billing Country.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'city',
                             'value' => $entry->billing->city ?? '',
-                            'label' => __( 'City' ),
-                            'description' => __( 'City' ),
-                        ], [
+                            'label' => __('City'),
+                            'description' => __('City'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'pobox',
                             'value' => $entry->billing->pobox ?? '',
-                            'label' => __( 'PO.Box' ),
-                            'description' => __( 'Postal Address' ),
-                        ], [
+                            'label' => __('PO.Box'),
+                            'description' => __('Postal Address'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'company',
                             'value' => $entry->billing->company ?? '',
-                            'label' => __( 'Company' ),
-                            'description' => __( 'Company' ),
-                        ], [
+                            'label' => __('Company'),
+                            'description' => __('Company'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'email',
                             'value' => $entry->billing->email ?? '',
-                            'label' => __( 'Email' ),
-                            'description' => __( 'Email' ),
+                            'label' => __('Email'),
+                            'description' => __('Email'),
                         ],
                     ],
                 ],
                 'shipping' => [
-                    'label' => __( 'Shipping Address' ),
+                    'label' => __('Shipping Address'),
                     'fields' => [
                         [
                             'type' => 'text',
                             'name' => 'first_name',
                             'value' => $entry->shipping->first_name ?? '',
-                            'label' => __( 'First Name' ),
-                            'description' => __( 'Provide the shipping First Name.' ),
-                        ], [
+                            'label' => __('First Name'),
+                            'description' => __('Provide the shipping First Name.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'last_name',
                             'value' => $entry->shipping->last_name ?? '',
-                            'label' => __( 'Last Name' ),
-                            'description' => __( 'Provide the shipping Last Name.' ),
-                        ], [
+                            'label' => __('Last Name'),
+                            'description' => __('Provide the shipping Last Name.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'phone',
                             'value' => $entry->shipping->phone ?? '',
-                            'label' => __( 'Phone' ),
-                            'description' => __( 'Shipping phone number.' ),
-                        ], [
+                            'label' => __('Phone'),
+                            'description' => __('Shipping phone number.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'address_1',
                             'value' => $entry->shipping->address_1 ?? '',
-                            'label' => __( 'Address 1' ),
-                            'description' => __( 'Shipping First Address.' ),
-                        ], [
+                            'label' => __('Address 1'),
+                            'description' => __('Shipping First Address.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'address_2',
                             'value' => $entry->shipping->address_2 ?? '',
-                            'label' => __( 'Address 2' ),
-                            'description' => __( 'Shipping Second Address.' ),
-                        ], [
+                            'label' => __('Address 2'),
+                            'description' => __('Shipping Second Address.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'country',
                             'value' => $entry->shipping->country ?? '',
-                            'label' => __( 'Country' ),
-                            'description' => __( 'Shipping Country.' ),
-                        ], [
+                            'label' => __('Country'),
+                            'description' => __('Shipping Country.'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'city',
                             'value' => $entry->shipping->city ?? '',
-                            'label' => __( 'City' ),
-                            'description' => __( 'City' ),
-                        ], [
+                            'label' => __('City'),
+                            'description' => __('City'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'pobox',
                             'value' => $entry->shipping->pobox ?? '',
-                            'label' => __( 'PO.Box' ),
-                            'description' => __( 'Postal Address' ),
-                        ], [
+                            'label' => __('PO.Box'),
+                            'description' => __('Postal Address'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'company',
                             'value' => $entry->shipping->company ?? '',
-                            'label' => __( 'Company' ),
-                            'description' => __( 'Company' ),
-                        ], [
+                            'label' => __('Company'),
+                            'description' => __('Company'),
+                        ],
+                        [
                             'type' => 'text',
                             'name' => 'email',
                             'value' => $entry->shipping->email ?? '',
-                            'label' => __( 'Email' ),
-                            'description' => __( 'Email' ),
+                            'label' => __('Email'),
+                            'description' => __('Email'),
                         ],
                     ],
                 ],
@@ -448,32 +496,32 @@ class UserCrud extends CrudService
      * @param  array of fields
      * @return array of fields
      */
-    public function filterPostInputs( $inputs )
+    public function filterPostInputs($inputs)
     {
-        unset( $inputs[ 'password_confirm' ] );
+        unset($inputs['password_confirm']);
 
         /**
          * if the password is not changed, no
          * need to hash it
          */
-        $inputs = collect( $inputs )->filter( fn( $input ) => ! empty( $input ) || $input === 0 )->toArray();
+        $inputs = collect($inputs)->filter(fn($input) => ! empty($input) || $input === 0)->toArray();
 
-        if ( ! empty( $inputs[ 'password' ] ) ) {
-            $inputs[ 'password' ] = Hash::make( $inputs[ 'password' ] );
+        if (! empty($inputs['password'])) {
+            $inputs['password'] = Hash::make($inputs['password']);
         }
 
-        return collect( $inputs )->map( function ( $value, $key ) {
-            if ( $key === 'group_id' && empty( $value ) ) {
-                $value = $this->options->get( 'ns_customers_default_group', false );
-                $group = CustomerGroup::find( $value );
+        return collect($inputs)->map(function ($value, $key) {
+            if ($key === 'group_id' && empty($value)) {
+                $value = $this->options->get('ns_customers_default_group', false);
+                $group = CustomerGroup::find($value);
 
-                if ( ! $group instanceof CustomerGroup ) {
-                    throw new NotAllowedException( __( 'The assigned default customer group doesn\'t exist or is not defined.' ) );
+                if (! $group instanceof CustomerGroup) {
+                    throw new NotAllowedException(__('The assigned default customer group doesn\'t exist or is not defined.'));
                 }
             }
 
             return $value;
-        } )->toArray();
+        })->toArray();
     }
 
     /**
@@ -482,32 +530,32 @@ class UserCrud extends CrudService
      * @param  array of fields
      * @return array of fields
      */
-    public function filterPutInputs( $inputs, User $entry )
+    public function filterPutInputs($inputs, User $entry)
     {
-        unset( $inputs[ 'password_confirm' ] );
+        unset($inputs['password_confirm']);
 
         /**
          * if the password is not changed, no
          * need to hash it
          */
-        $inputs = collect( $inputs )->filter( fn( $input ) => ! empty( $input ) || $input === 0 )->toArray();
+        $inputs = collect($inputs)->filter(fn($input) => ! empty($input) || $input === 0)->toArray();
 
-        if ( ! empty( $inputs[ 'password' ] ) ) {
-            $inputs[ 'password' ] = Hash::make( $inputs[ 'password' ] );
+        if (! empty($inputs['password'])) {
+            $inputs['password'] = Hash::make($inputs['password']);
         }
 
-        return collect( $inputs )->map( function ( $value, $key ) {
-            if ( $key === 'group_id' && empty( $value ) ) {
-                $value = $this->options->get( 'ns_customers_default_group', false );
-                $group = CustomerGroup::find( $value );
+        return collect($inputs)->map(function ($value, $key) {
+            if ($key === 'group_id' && empty($value)) {
+                $value = $this->options->get('ns_customers_default_group', false);
+                $group = CustomerGroup::find($value);
 
-                if ( ! $group instanceof CustomerGroup ) {
-                    throw new NotAllowedException( __( 'The assigned default customer group doesn\'t exist or is not defined.' ) );
+                if (! $group instanceof CustomerGroup) {
+                    throw new NotAllowedException(__('The assigned default customer group doesn\'t exist or is not defined.'));
                 }
             }
 
             return $value;
-        } )->toArray();
+        })->toArray();
     }
 
     /**
@@ -516,23 +564,23 @@ class UserCrud extends CrudService
      * @param  Request $request
      * @return void
      */
-    public function afterPost( $request, User $entry )
+    public function afterPost($request, User $entry)
     {
-        if ( isset( $request[ 'roles'] ) ) {
+        if (isset($request['roles'])) {
             $this->userService
                 ->setUserRole(
                     $entry,
-                    $request[ 'roles' ]
+                    $request['roles']
                 );
 
-            $this->userService->createAttribute( $entry );
+            $this->userService->createAttribute($entry);
 
             /**
              * While creating the user, if we set that user as active
              * we'll dispatch the activation successful event.
              */
-            if ( $entry->active ) {
-                UserAfterActivationSuccessfulEvent::dispatch( $entry );
+            if ($entry->active) {
+                UserAfterActivationSuccessfulEvent::dispatch($entry);
             }
         }
 
@@ -545,10 +593,11 @@ class UserCrud extends CrudService
      * @param  string
      * @return mixed
      */
-    public function get( $param )
+    public function get($param)
     {
-        switch ( $param ) {
-            case 'model': return $this->model;
+        switch ($param) {
+            case 'model':
+                return $this->model;
                 break;
         }
     }
@@ -560,9 +609,9 @@ class UserCrud extends CrudService
      * @param  object entry
      * @return void
      */
-    public function beforePut( $request, $entry )
+    public function beforePut($request, $entry)
     {
-        $this->allowedTo( 'update' );
+        $this->allowedTo('update');
 
         return $request;
     }
@@ -574,23 +623,23 @@ class UserCrud extends CrudService
      * @param  object entry
      * @return void
      */
-    public function afterPut( $request, User $entry )
+    public function afterPut($request, User $entry)
     {
-        if ( isset( $request[ 'roles'] ) ) {
+        if (isset($request['roles'])) {
             $this->userService
                 ->setUserRole(
                     $entry,
-                    $request[ 'roles' ]
+                    $request['roles']
                 );
 
-            $this->userService->createAttribute( $entry );
+            $this->userService->createAttribute($entry);
 
             /**
              * While creating the user, if we set that user as active
              * we'll dispatch the activation successful event.
              */
-            if ( $entry->active ) {
-                UserAfterActivationSuccessfulEvent::dispatch( $entry );
+            if ($entry->active) {
+                UserAfterActivationSuccessfulEvent::dispatch($entry);
             }
         }
 
@@ -602,13 +651,13 @@ class UserCrud extends CrudService
      *
      * @return void
      */
-    public function beforeDelete( $namespace, int $id, $model )
+    public function beforeDelete($namespace, int $id, $model)
     {
-        if ( $namespace == 'ns.users' ) {
-            $this->allowedTo( 'delete' );
+        if ($namespace == 'ns.users') {
+            $this->allowedTo('delete');
 
-            if ( $id === Auth::id() ) {
-                throw new NotAllowedException( __( 'You cannot delete your own account.' ) );
+            if ($id === Auth::id()) {
+                throw new NotAllowedException(__('You cannot delete your own account.'));
             }
         }
     }
@@ -621,37 +670,37 @@ class UserCrud extends CrudService
         return CrudTable::columns(
             CrudTable::column(
                 identifier: 'username',
-                label: __( 'Username' ),
+                label: __('Username'),
                 attributes: CrudTable::attributes(
                     CrudTable::attribute(
                         column: 'active',
-                        label: __( 'Active' )
+                        label: __('Active')
                     ),
                     CrudTable::attribute(
                         column: 'email',
-                        label: __( 'Email' )
+                        label: __('Email')
                     )
                 )
             ),
             CrudTable::column(
-                label: __( 'Wallet' ),
+                label: __('Wallet'),
                 identifier: 'account_amount',
             ),
             CrudTable::column(
-                label: __( 'Owed' ),
+                label: __('Owed'),
                 identifier: 'owed_amount'
             ),
             CrudTable::column(
-                label: __( 'Purchases' ),
+                label: __('Purchases'),
                 identifier: 'purchases_amount'
             ),
             CrudTable::column(
-                label: __( 'Roles' ),
+                label: __('Roles'),
                 identifier: 'rolesNames',
                 sort: false
             ),
             CrudTable::column(
-                label: __( 'Created At' ),
+                label: __('Created At'),
                 identifier: 'created_at'
             )
         );
@@ -660,51 +709,51 @@ class UserCrud extends CrudService
     /**
      * Define actions
      */
-    public function setActions( CrudEntry $entry ): CrudEntry
+    public function setActions(CrudEntry $entry): CrudEntry
     {
         $entry->action(
             identifier: 'edit_customers_group',
-            label: __( 'Edit' ),
-            url: ns()->url( 'dashboard/users/edit/' . $entry->id ),
+            label: __('Edit'),
+            url: ns()->url('dashboard/users/edit/' . $entry->id),
         );
 
         $entry->action(
             identifier: 'customers_orders',
-            label: __( 'Orders' ),
-            url: ns()->url( 'dashboard/users/' . $entry->id . '/orders' ),
+            label: __('Orders'),
+            url: ns()->url('dashboard/users/' . $entry->id . '/orders'),
         );
 
         $entry->action(
             identifier: 'customers_rewards',
-            label: __( 'Rewards' ),
-            url: ns()->url( 'dashboard/users/' . $entry->id . '/rewards' ),
+            label: __('Rewards'),
+            url: ns()->url('dashboard/users/' . $entry->id . '/rewards'),
         );
 
         $entry->action(
             identifier: 'customers_coupons',
-            label: __( 'Coupons' ),
-            url: ns()->url( 'dashboard/users/' . $entry->id . '/coupons' ),
+            label: __('Coupons'),
+            url: ns()->url('dashboard/users/' . $entry->id . '/coupons'),
         );
 
         $entry->action(
             identifier: 'customers_history',
-            label: __( 'Wallet History' ),
-            url: ns()->url( 'dashboard/users/' . $entry->id . '/account-history' ),
+            label: __('Wallet History'),
+            url: ns()->url('dashboard/users/' . $entry->id . '/account-history'),
         );
 
         $entry->action(
             identifier: 'delete',
-            label: __( 'Delete' ),
+            label: __('Delete'),
             type: 'DELETE',
-            url: ns()->url( '/api/crud/ns.users/' . $entry->id ),
+            url: ns()->url('/api/crud/ns.users/' . $entry->id),
             confirm: [
-                'message' => __( 'Would you like to delete this ?' ),
-                'title' => __( 'Delete a user' ),
+                'message' => __('Would you like to delete this ?'),
+                'title' => __('Delete a user'),
             ],
         );
 
-        $roles = User::find( $entry->id )->roles()->get();
-        $entry->rolesNames = $roles->map( fn( $role ) => $role->name )->join( ', ' ) ?: __( 'Not Assigned' );
+        $roles = User::find($entry->id)->roles()->get();
+        $entry->rolesNames = $roles->map(fn($role) => $role->name)->join(', ') ?: __('Not Assigned');
 
         return $entry;
     }
@@ -715,20 +764,20 @@ class UserCrud extends CrudService
      * @param    object Request with object
      * @return  false/array
      */
-    public function bulkAction( Request $request )
+    public function bulkAction(Request $request)
     {
         /**
          * Deleting licence is only allowed for admin
          * and supervisor.
          */
-        $user = app()->make( UsersService::class );
-        if ( ! $user->is( [ 'admin', 'supervisor' ] ) ) {
+        $user = app()->make(UsersService::class);
+        if (! $user->is(['admin', 'supervisor'])) {
             return JsonResponse::error(
-                message: __( 'You\'re not allowed to do this operation' )
+                message: __('You\'re not allowed to do this operation')
             );
         }
 
-        if ( $request->input( 'action' ) == 'delete_selected' ) {
+        if ($request->input('action') == 'delete_selected') {
             $status = [
                 'success' => 0,
                 'error' => 0,
@@ -737,24 +786,24 @@ class UserCrud extends CrudService
             /**
              * @temp
              */
-            if ( Auth::user()->role->namespace !== 'admin' ) {
-                throw new Exception( __( 'Access Denied' ) );
+            if (Auth::user()->role->namespace !== 'admin') {
+                throw new Exception(__('Access Denied'));
             }
 
-            foreach ( $request->input( 'entries' ) as $id ) {
-                $entity = $this->model::find( $id );
-                if ( $entity instanceof User ) {
+            foreach ($request->input('entries') as $id) {
+                $entity = $this->model::find($id);
+                if ($entity instanceof User) {
                     $entity->delete();
-                    $status[ 'success' ]++;
+                    $status['success']++;
                 } else {
-                    $status[ 'error' ]++;
+                    $status['error']++;
                 }
             }
 
             return $status;
         }
 
-        return Hook::filter( $this->namespace . '-catch-action', false, $request );
+        return Hook::filter($this->namespace . '-catch-action', false, $request);
     }
 
     /**
@@ -765,11 +814,11 @@ class UserCrud extends CrudService
     public function getLinks(): array
     {
         return [
-            'list' => ns()->url( 'dashboard/' . 'users' ),
-            'create' => ns()->url( 'dashboard/' . 'users/create' ),
-            'edit' => ns()->url( 'dashboard/' . 'users/edit/' ),
-            'post' => ns()->url( 'api/crud/' . 'ns.users' ),
-            'put' => ns()->url( 'api/crud/' . 'ns.users/{id}' . '' ),
+            'list' => ns()->url('dashboard/' . 'users'),
+            'create' => ns()->url('dashboard/' . 'users/create'),
+            'edit' => ns()->url('dashboard/' . 'users/edit/'),
+            'post' => ns()->url('api/crud/' . 'ns.users'),
+            'put' => ns()->url('api/crud/' . 'ns.users/{id}' . ''),
         ];
     }
 
@@ -780,15 +829,15 @@ class UserCrud extends CrudService
      **/
     public function getBulkActions(): array
     {
-        return Hook::filter( $this->namespace . '-bulk', [
+        return Hook::filter($this->namespace . '-bulk', [
             [
-                'label' => __( 'Delete Selected Groups' ),
+                'label' => __('Delete Selected Groups'),
                 'identifier' => 'delete_selected',
-                'url' => ns()->route( 'ns.api.crud-bulk-actions', [
+                'url' => ns()->route('ns.api.crud-bulk-actions', [
                     'namespace' => $this->namespace,
-                ] ),
+                ]),
             ],
-        ] );
+        ]);
     }
 
     /**

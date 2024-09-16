@@ -238,6 +238,23 @@ class MenuService
                     ],
                 ],
             ],
+            'branches' => [
+                'label' => __( 'Branches' ),
+                'icon' => 'la-users',
+                'childrens' => [
+                    'branches' => [
+                        'label' => __( 'Branches List' ),
+                        'permissions' => [ 'read.users' ],
+                        'href' => ns()->url( '/dashboard/branches' ),
+                    ],
+                    'create-branch' => [
+                        'label' => __( 'Create Branche' ),
+                        'permissions' => [ 'create.users' ],
+                        'href' => ns()->url( '/dashboard/branches/create' ),
+                    ],
+                ],
+            ],
+
             'taxes' => [
                 'label' => __( 'Taxes' ),
                 'icon' => 'la-balance-scale-left',

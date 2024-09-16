@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Dashboard\BranchesController;
 use App\Http\Controllers\Dashboard\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,3 +12,7 @@ Route::get( '/users/profile', [ UsersController::class, 'getProfile' ] )->name( 
 Route::get( '/users/roles', [ UsersController::class, 'rolesList' ] )->name( 'ns.dashboard.users.roles' );
 Route::get( '/users/roles/create', [ UsersController::class, 'createRole' ] )->name( 'ns.dashboard.users.roles-create' );
 Route::get( '/users/roles/edit/{role}', [ UsersController::class, 'editRole' ] )->name( 'ns.dashboard.users.roles-edit' );
+
+
+Route::get( '/branches', [ BranchesController::class, 'listBranches' ] )->name( 'ns.dashboard.branches' );
+Route::get( '/branches/create', [ BranchesController::class, 'createBranch' ] )->name( 'ns.dashboard.branche-create' );
