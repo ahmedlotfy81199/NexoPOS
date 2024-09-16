@@ -553,6 +553,9 @@ class CrudService
         $table = $this->hookTableName( $this->table );
         $request = app()->make( Request::class );
         $query = DB::table( $table );
+        if(Schema::hasColumn($table, 'branch_id') && isset(auth()->user()?->branch_id)){
+            $query = $query->where($table.'.branch_id' , auth()->user()->branch_id);
+        }
         $columnsLongName = [];
 
         /**

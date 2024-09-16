@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Classes\Hook;
+use App\Traits\BelongsToBranch;
 use App\Traits\NsDependable;
 use Illuminate\Notifications\Notifiable;
 
 abstract class NsModel extends NsRootModel
 {
-    use Notifiable, NsDependable;
+    use Notifiable, NsDependable , BelongsToBranch;
 
     /**
      * if defined, the Crud component
