@@ -29,6 +29,7 @@ use App\Services\Options;
 use App\Services\OrdersService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class OrdersController extends DashboardController
 {
@@ -266,6 +267,10 @@ class OrdersController extends DashboardController
         $order->load( 'billing_address' );
         $order->load( 'user' );
 
+        $receiptUrl = route('receipt.public', ['id' => $order->id]);
+
+        $qrCode = QrCode::size(100)->generate($receiptUrl);
+
         return View::make( 'pages.dashboard.orders.templates.receipt', [
             'order' => $order,
             'title' => sprintf( __( 'Order Receipt &mdash; %s' ), $order->code ),
@@ -274,6 +279,7 @@ class OrdersController extends DashboardController
             'paymentTypes' => collect( $this->paymentTypes )->mapWithKeys( function ( $payment ) {
                 return [ $payment[ 'identifier' ] => $payment[ 'label' ] ];
             } ),
+            'qrCode' => $qrCode,
         ] );
     }
 

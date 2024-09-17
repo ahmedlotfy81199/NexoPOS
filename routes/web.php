@@ -2,6 +2,7 @@
 
 use App\Events\BeforeStartWebRouteEvent;
 use App\Http\Controllers\DevController;
+use App\Http\Controllers\PublicReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +63,9 @@ if ( env( 'APP_DEBUG' ) ) {
      * those routes are registered.
      */
     Route::get( '__dev__', [ DevController::class, 'index' ] );
+
+    Route::get('/public-receipt/{id}', [PublicReceiptController::class, 'publicReceipt'])->name('receipt.public');
+
 
     include dirname( __FILE__ ) . '/debug.php';
 }
